@@ -82,10 +82,11 @@ knnresult kNN(double *X, double *Y, int n, int m, int d, int k)
         quickSelect(k-1,D + i*d, idArr, 0, n-1);
         //now every row from [0..k-1] holds the k nearest neighbors
         memcpy(result.ndist + i*k, D + i*n, k*sizeof(double));  //copies the  kNN's distances
-        memcpy(result.nidx + i*k, D + i*n, k*sizeof(int));  //copies the kNN's IDs
+        memcpy(result.nidx + i*k, idArr, k*sizeof(int));  //copies the kNN's IDs
     }
 
     free(D);
+    free(idArr);
     return result;
 
 }
