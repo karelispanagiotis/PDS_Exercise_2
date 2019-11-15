@@ -1,4 +1,4 @@
-#include "knn.h"
+#include "knnring.h"
 #include <stdlib.h>
 #include <cblas.h>
 #include <math.h>
