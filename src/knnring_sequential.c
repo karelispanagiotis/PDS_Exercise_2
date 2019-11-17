@@ -1,18 +1,19 @@
-#include "knnring.h"
+#include "/home/kitsiosk/PDS_Exercise_2/inc/knnring.h"
 #include <stdlib.h>
 #include <cblas.h>
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
 
 double square(double x) { return x * x; }
 
-inline void swapDouble(double *a, double *b)
+void swapDouble(double *a, double *b)
 {
     double temp = *a;
     *a = *b;
     *b = temp;
 }
-inline void swapInt(int *a, int *b)
+void swapInt(int *a, int *b)
 {
     int temp = *a;
     *a = *b;
@@ -72,11 +73,12 @@ knnresult kNN(double *X, double *Y, int n, int m, int d, int k)
     int *idArr = malloc(n*sizeof(int));
     knnresult result;
 
-    result.ndist = malloc(m * k * sizeof(double));
-    result.nidx = malloc(m * k * sizeof(double));
+    
+    result.k = k;
+    result.m = m;
     for(int i=0; i<m; i++)
     {
-        for(int j=0; j<n; j++) 
+        for(int j=0; j<n; j++)
             idArr[j] = j;
 
         quickSelect(k-1,D + i*d, idArr, 0, n-1);
@@ -89,4 +91,20 @@ knnresult kNN(double *X, double *Y, int n, int m, int d, int k)
     free(idArr);
     return result;
 
+}
+
+int main(){
+    int n=2, m=1, k=2, d=2;
+    double X[2][2] = {{0, 0}, {4, 4}};
+    double Y[2][2] = {{1, 1}, {3, 3}};
+
+    knnresult result = kNN((double *) X, (double *) Y, n, m, d, k);
+    for(int i=0; i<m; ++i){
+        for(int j=0; j<k; ++j){
+            printf("%lf ", result.ndist[i*k+j]);
+        }
+        printf("\n");
+    }
+
+    return 0;
 }
