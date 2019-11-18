@@ -2,7 +2,7 @@
 SHELL := /bin/bash
 
 #define the C compiler to use
-CC = gcc-6
+CC = gcc-7
 
 #define compile-time flags
 CFLAGS = -Wall -O3 -lblas

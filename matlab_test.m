@@ -1,11 +1,13 @@
 % Change the values below and X, Y to create a test case
-k = 1; n = 3; m = 2; d = 2;
+n = 5;
+m = 2;
+d = 2;
+k = 3;
 
-X = [0 0; 1 1; 9 9];  % n x d
-Y = [0 0; 10 10];     % m x d
+X = [1 2; 1 5; 8 9; 1.2 5; 6 3.25];  % n x d
+Y = [8 4; 1.54 8.225];     % m x d
 
-D = sqrt(sum(X.^2,2) - 2 * X*Y.' + sum(Y.^2,2).');  %n x m
-D = D';                                             %m x n
+D = sqrt(sum(X.^2,2).' - 2 * Y * X.' + sum(Y.^2,2));  %m x n
 
 [ndist, nidx] = sort(D, 2);
 
