@@ -4,12 +4,12 @@ m = 2;
 d = 2;
 k = 3;
 
-X = [1 2; 1 5; 8 9; 1.2 5; 6 3.25];  % n x d
-Y = [8 4; 1.54 8.225];     % m x d
+X = [1 2 1 5 8; 9 1.2 5 6 3.25];  % d x n
+Y = [8 4; 1.54 8.225];     % d x m
 
-D = sqrt(sum(X.^2,2).' - 2 * Y * X.' + sum(Y.^2,2));  %m x n
+D = sqrt(sum(X.^2).' - 2 * X.' * Y + sum(Y.^2));  % n x m
 
-[ndist, nidx] = sort(D, 2);
+[ndist, nidx] = sort(D);
 
-ndist = ndist(:, 1:k)  % m x k, the k nearest distances for each one of the m query points
-nidx = nidx(:, 1:k)    % m x k, the corresponding indices of the above distances
+ndist = ndist(1:k,:)  % m x k, the k nearest distances for each one of the m query points
+nidx = nidx(1:k, :)    % m x k, the corresponding indices of the above distances

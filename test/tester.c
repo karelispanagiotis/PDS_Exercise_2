@@ -119,10 +119,10 @@ int main()
   double  * query  = (double * ) malloc( m*d * sizeof(double) );
 
   for (int i=0;i<n*d;i++)
-    corpus[i]= ( (double) (rand()%100) ) / 50;
+    corpus[i]= (double)rand()/(double)RAND_MAX; 
 
   for (int i=0;i<m*d;i++)
-    query[i]= ( (double) (rand()%100) ) / 50;
+    query[i]= (double)rand()/(double)RAND_MAX; 
 
   knnresult knnres = kNN( corpus, query, n, m, d, k );
 
