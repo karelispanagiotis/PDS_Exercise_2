@@ -1,6 +1,6 @@
 #include "knnring.h"
 #include <stdlib.h>
-#include <cblas.h>
+#include <cblas-openblas.h>
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
