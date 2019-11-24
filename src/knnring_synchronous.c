@@ -1,5 +1,7 @@
 #include "knnring.h"
+#include <mpi.h>
 #include <string.h>
+#include <stdlib.h>
 
 void updateResult(knnresult* store, knnresult* new)
 {
@@ -39,4 +41,43 @@ void updateResult(knnresult* store, knnresult* new)
             }
         }
     }
+}
+
+knnresult distrAllkNN(double * X, int n, int d, int k)
+{
+    knnresult result, tempResult;
+    /* result:     Holds the updated result
+     *             in each iteration
+     * tempResult: Holds the kNN of local data X (query)
+     *             inside received data Y (corpus)
+     */   
+    int numtasks, rank, next, prev, buf, tag=1;
+    MPI_Status status;
+
+    MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    // determine left and right neighbors
+    prev = rank-1;
+    next = rank+1;
+    if (rank == 0)  prev = numtasks - 1;
+    if (rank == (numtasks - 1))  next = 0;
+
+    result = kNN(X, X, n, n, d, k);
+
+    double *Y = malloc(d*n*sizeof(double)); //holds the data to be received
+    for(int i=0; i < numtasks-1; i++)
+    {
+        MPI_Send(X, d*n, MPI_DOUBLE, next, tag, MPI_COMM_WORLD);
+        MPI_Recv(Y, d*n, MPI_DOUBLE, prev, tag, MPI_COMM_WORLD, &status);
+
+        tempResult = kNN(Y, X, n, n, d, k);
+
+        updateResult(&result, &tempResult);   //result holds the current kNN of X
+        free(tempResult.ndist);
+        free(tempResult.nidx); 
+    }
+    free(Y);
+
+    return result;
 }
