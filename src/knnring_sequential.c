@@ -85,8 +85,8 @@ knnresult kNN(double *X, double *Y, int n, int m, int d, int k)
         for(int j=0; j<n; j++)
             idArr[j] = j;
 
-        quickSort(D + i, idArr, 0, n - 1, m);
-        // now every column from [0..k-1] holds the k nearest neighbors
+        quickSort(D + i, idArr, 0, n - 1, m);   //sorts each column
+        // now every column, from [0..k-1] holds the k nearest neighbors
         // and idArr from [0...k-1] holds the k nearest IDs
 
         for(int j=0; j<k; j++)
