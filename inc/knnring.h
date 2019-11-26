@@ -21,6 +21,8 @@ typedef struct knnresult
 */
 knnresult kNN(double *X, double *Y, int n, int m, int d, int k);
 
+knnresult kNNpartion(double *X, double *Y, int n, int m, int d, int k, int idOffset);
+
 knnresult distrAllkNN(double * X, int n, int d, int k);
 
 #endif

@@ -72,7 +72,7 @@ double *calculateD(double *X, double *Y, int n, int m, int d)
 
 ////////////////////////////////////////////////////////////////////////////
 
-knnresult kNN(double *X, double *Y, int n, int m, int d, int k)
+knnresult kNNpartion(double *X, double *Y, int n, int m, int d, int k, int idOffset)
 {
     double *D = calculateD(X, Y, n, m, d);
 
@@ -83,7 +83,7 @@ knnresult kNN(double *X, double *Y, int n, int m, int d, int k)
     for(int i=0; i<m; i++)
     {
         for(int j=0; j<n; j++)
-            idArr[j] = j;
+            idArr[j] = idOffset + j;
 
         quickSort(D + i, idArr, 0, n - 1, m);   //sorts each column
         // now every column, from [0..k-1] holds the k nearest neighbors
@@ -100,4 +100,9 @@ knnresult kNN(double *X, double *Y, int n, int m, int d, int k)
     result.m = m;
 
     return result;
+}
+
+knnresult kNN(double *X, double *Y, int n, int m, int d, int k)
+{
+    return kNNpartion(X, Y, n, m, d, k, 0); //IDs start from 0
 }
