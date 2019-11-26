@@ -3,14 +3,14 @@
    #include <stdlib.h>
 
 int main(int argc, char *argv[])  {
-    int numtasks, rank, next, prev, buf, tag1=1;
+    int numtasks, rank, next, prev, buf, tag=1;
     MPI_Status status;   // required variable for Waitall routine
 
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    int n = 5;
+    int n = 1000000;
     int *X = (int *) malloc(n * sizeof(int));
     for(int i=0; i<n; ++i){
         X[i] = rank;
@@ -23,13 +23,11 @@ int main(int argc, char *argv[])  {
     if (rank == 0)  prev = numtasks - 1;
     if (rank == (numtasks - 1))  next = 0;
 
-    for(int i=0; i<numtasks; ++i){
-        MPI_Send(X, n, MPI_INT, next, tag1, MPI_COMM_WORLD);
+    MPI_Sendrecv(X, n, MPI_INT, next, tag, Y, n, MPI_INT, prev, tag, MPI_COMM_WORLD, &status);
 
-        MPI_Recv(Y, n, MPI_INT, prev, tag1, MPI_COMM_WORLD, &status);
-
-        printf("In proccess %d, received %d from %d\n", rank, Y[4], prev);
-        X = Y;
+    for(int i=0; i<numtasks-1; ++i){
+        printf("In proccess %d, received %d from %d\n", rank, Y[n-1], prev);
+        MPI_Sendrecv_replace(Y, n, MPI_INT, next, tag, prev, tag, MPI_COMM_WORLD, &status);
     }
 
     MPI_Finalize();
