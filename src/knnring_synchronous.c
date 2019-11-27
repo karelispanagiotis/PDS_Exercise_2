@@ -2,6 +2,9 @@
 #include <mpi.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+
 
 void updateResult(knnresult* store, knnresult* new)
 {
@@ -57,29 +60,34 @@ knnresult distrAllkNN(double * X, int n, int d, int k)
     MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+
     // determine previous and next neighbors
     prev = rank-1;
     next = rank+1;
     if (rank == 0)  prev = numtasks - 1;
     if (rank == (numtasks - 1))  next = 0;
 
-    result = kNN(X, X, n, n, d, k); //find kNN of X inside X
-    MPI_Send(X, d*n, MPI_DOUBLE, next, tag, MPI_COMM_WORLD);
-    
+    int idOffset = rank*n;
+    result = kNN(X, X, n, n, d, k);    //IDs start from [rank ... rank+n-1]
+
     //Y holds the data to receive, to work with and finally send 
     double *Y = malloc(d*n *sizeof(double)); 
-    for(int i=1; i < numtasks; i++)
+    MPI_Sendrecv(X, d*n, MPI_DOUBLE, next, tag, Y, d*n, MPI_DOUBLE, prev, tag, MPI_COMM_WORLD, &status);
+    MPI_Sendrecv_replace(&idOffset, 1, MPI_INT, next, tag, prev, tag, MPI_COMM_WORLD, &status);
+
+    for(int iter=1; iter<numtasks; iter++)
     {
-        MPI_Recv(Y, d*n, MPI_DOUBLE, prev, tag, MPI_COMM_WORLD, &status);
-        
-        tempResult = kNN(Y, X, n, n, d, k);
+        tempResult = kNNpartion(Y, X, n, n, d, k, idOffset);
         updateResult(&result, &tempResult);
 
         free(tempResult.ndist);
         free(tempResult.nidx);
         
-        MPI_Send(Y, d*n, MPI_DOUBLE, next, tag, MPI_COMM_WORLD);
+        MPI_Sendrecv_replace(Y, d*n, MPI_DOUBLE, next, tag, prev, tag, MPI_COMM_WORLD, &status);
+        MPI_Sendrecv_replace(&idOffset, 1, MPI_INT, next, tag, prev, tag, MPI_COMM_WORLD, &status);
     }
+
+    free(Y);
 
     return result;
 }
