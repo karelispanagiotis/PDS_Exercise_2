@@ -67,8 +67,10 @@ knnresult distrAllkNN(double * X, int n, int d, int k)
     if (rank == 0)  prev = numtasks - 1;
     if (rank == (numtasks - 1))  next = 0;
 
-    int idOffset = rank*n;
-    result = kNN(X, X, n, n, d, k);    //IDs start from [rank ... rank+n-1]
+    int idOffset = (rank-1)*n;
+    if(rank == 0)
+        idOffset = (numtasks-1)*n;
+    result = kNNpartion(X, X, n, n, d, k, idOffset);    //IDs start from rank*n
 
     //Y holds the data to receive, to work with and finally send 
     double *Y = malloc(d*n *sizeof(double)); 
@@ -88,6 +90,5 @@ knnresult distrAllkNN(double * X, int n, int d, int k)
     }
 
     free(Y);
-
     return result;
 }
