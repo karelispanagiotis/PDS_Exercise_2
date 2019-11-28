@@ -19,9 +19,9 @@
 int main()
 {
 
-  int n=897;                    // corpus
+  int n=30000;                    // corpus
   int m=762;                    // query 
-  int d=7;                      // dimensions
+  int d=50;                      // dimensions
   int k=13;                     // # neighbors
 
   double  * corpus = (double * ) malloc( n*d * sizeof(double) );
@@ -35,9 +35,9 @@ int main()
 
   knnresult knnres = kNN( corpus, query, n, m, d, k );
 
-  int isValidC = validateResultColMajor( knnres, corpus, query, n, m, d, k );
+  int isValidC = validateResult( knnres, corpus, query, n, m, d, k, COLMAJOR );
 
-  int isValidR = validateResultRowMajor( knnres, corpus, query, n, m, d, k );
+  int isValidR = validateResult( knnres, corpus, query, n, m, d, k, ROWMAJOR );
   
   printf("Tester validation: %s NEIGHBORS\n",
          STR_CORRECT_WRONG[isValidC||isValidR]);

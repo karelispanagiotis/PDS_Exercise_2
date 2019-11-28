@@ -10,12 +10,154 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <math.h>
 #include <assert.h>
-#include "knnring.h"
 #include "mpi.h"
 
 #include "tester_helper.h"
+
+
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% RANDOM ALLOCATION HELPER
+
+double * ralloc( int sz ){
+  double *X = (double *) malloc( sz *sizeof(double) );
+  for (int i=0;i<sz;i++)
+    X[i] = ( (double) (rand()) ) / (double) RAND_MAX;
+  return X;
+}
+
+
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MPI TESTER MAIN FUNCTION
+
+int testMPI( int    const n,
+             int    const d,
+             int    const k,
+             int    const ap ){
+
+  int p, id;                    // MPI # processess and PID
+  MPI_Status Stat;              // MPI status
+  int dst, rcv, tag;            // MPI destination, receive, tag
+
+  int isValid = 0;              // return value
+  
+  MPI_Comm_rank(MPI_COMM_WORLD, &id); // Task ID
+  MPI_Comm_size(MPI_COMM_WORLD, &p);  // # tasks
+
+
+  // allocate corpus for each process
+  double * const corpus = (double * ) malloc( n*d * sizeof(double) );
+  
+  if (id == 0) {                //============================== MASTER
+
+    // ---------- Initialize data to begin with
+    double const * const corpusAll = ralloc( n*d*p );
+    
+    
+    // ---------- Break to subprocesses
+    for (int ip = 0; ip < p; ip++){
+      
+      for (int i=0; i<n; i++)
+        for (int j=0; j<d; j++)
+          if (ap == COLMAJOR)
+            corpus_cm(i,j) = corpusAll_cm(i+ip*n,j);
+          else
+            corpus_rm(i,j) = corpusAll_rm(i+ip*n,j);
+
+      if (ip == p-1)            // last chunk is mine
+        break;
+    
+      // which process to send? what tag?
+      dst = ip+1;
+      tag = 1;
+    
+      // send to correct process
+      MPI_Send(corpus, n*d, MPI_DOUBLE, dst, tag, MPI_COMM_WORLD);
+
+    } // for (ip)
+
+
+    // ---------- Run distributed kNN
+    knnresult const knnres = distrAllkNN( corpus, n, d, k);
+
+    
+    // ---------- Prepare global kNN result object
+    knnresult knnresall;
+    knnresall.nidx  = (int *)   malloc( n*p*k*sizeof(int)    );
+    knnresall.ndist = (double *)malloc( n*p*k*sizeof(double) );
+    knnresall.m = n*p;
+    knnresall.k = k;
+
+
+    // ---------- Put my results to correct spot
+    for (int j = 0; j < k; j++)
+      for (int i = 0; i < n; i++){
+        if (ap == COLMAJOR){
+          knnresallnidx_cm(i+(p-1)*n,j)  = knnresnidx_cm(i,j);
+          knnresallndist_cm(i+(p-1)*n,j) = knnresndist_cm(i,j);
+        }else{
+          knnresallnidx_rm(i+(p-1)*n,j)  = knnresnidx_rm(i,j);
+          knnresallndist_rm(i+(p-1)*n,j) = knnresndist_rm(i,j);
+        }
+    }
+
+
+    // ---------- Gather results back
+    for (int ip = 0; ip < p-1; ip++){
+
+      rcv = ip+1;
+      tag = 1;
+      
+      MPI_Recv( knnres.nidx, n*k, MPI_INT, rcv, tag, MPI_COMM_WORLD, &Stat);
+      MPI_Recv( knnres.ndist, n*k, MPI_DOUBLE, rcv, tag, MPI_COMM_WORLD, &Stat);
+      
+      for (int j = 0; j < k; j++)
+        for (int i = 0; i < n; i++){
+          if (ap == COLMAJOR){
+            knnresallnidx_cm(i+ip*n,j)  = knnresnidx_cm(i,j);
+            knnresallndist_cm(i+ip*n,j) = knnresndist_cm(i,j);
+          }else{
+            knnresallnidx_rm(i+ip*n,j)  = knnresnidx_rm(i,j);
+            knnresallndist_rm(i+ip*n,j) = knnresndist_rm(i,j);
+          }
+        }
+
+    }
+
+
+    // ---------- Validate results
+    isValid = validateResult( knnresall, corpusAll, corpusAll,
+                              n*p, n*p, d, k, ap );
+    
+  } else {                      //============================== SLAVE
+
+    // ---------- Get data from MASTER
+    rcv = 0;
+    tag = 1;
+
+    MPI_Recv(corpus, n*d, MPI_DOUBLE, rcv, tag, MPI_COMM_WORLD, &Stat);
+
+    
+    // ---------- Run distributed kNN
+    knnresult const knnres = distrAllkNN( corpus, n, d, k);
+
+    
+    // ---------- Send data back to MASTER
+    dst = 0;
+    tag = 1;
+
+    MPI_Send(knnres.nidx, n*k, MPI_INT, dst, tag, MPI_COMM_WORLD);
+    MPI_Send(knnres.ndist, n*k, MPI_DOUBLE, dst, tag, MPI_COMM_WORLD);
+    
+  }
+  
+
+  // ~~~~~~~~~~~~~~~~~~~~ Deallocate memory
+  free( corpus );
+
+  
+  // ~~~~~~~~~~~~~~~~~~~~ Return wheter validations passed or not
+  return isValid;
+  
+}
 
 
 int main(int argc, char *argv[])
@@ -23,126 +165,28 @@ int main(int argc, char *argv[])
 
   MPI_Init(&argc, &argv);       // initialize MPI
 
-  int p, id;                    // # processess and PID
-  int n=1423;                    // # corpus elements per process
-  int d=37;                      // dimensions
+  int id;                       // PID
+  int n=10000;                   // # corpus elements per process
+  int d=2;                     // # dimensions
   int k=13;                     // # neighbors
 
-  double * corpus;              // will hold data
-  
   MPI_Comm_rank(MPI_COMM_WORLD, &id); // Task ID
-  MPI_Comm_size(MPI_COMM_WORLD, &p); // # tasks
 
   
-  // initialize (as if it could hold, for testing)
-  double * corpusAll = (double * ) malloc( p*n*d * sizeof(double) );
+  // ============================== RUN EXPERIMENTS
 
-  if (id == 0) {                // ..... MASTER
-    
-    for (int ip = 0; ip < p; ip++){
+  int isValidC = testMPI( n, d, k, COLMAJOR );
+  int isValidR = testMPI( n, d, k, ROWMAJOR );
 
-      // "read" new chunk
-      corpus = (double * ) malloc( n*d * sizeof(double) );
 
-      for (int i=0;i<n*d;i++){
-        corpusAll[i+ip*n*d] = ( (double) (rand()) ) / (double) RAND_MAX;
-        corpus[i]= corpusAll[i+ip*n*d];
-      }
-      
-      if (ip == p-1)            // last chunk is mine
-        break;
-      
-      // which process to send? what tag?
-      int dst = ip+1;
-      int tag = 1;
-
-      // send to correct process
-      MPI_Send(corpus, n*d, MPI_DOUBLE, dst, tag, MPI_COMM_WORLD);
-      
-      free( corpus );
-    
-    }
-
-  } else {                      // ..... other processes
-
-    // from which process to I receive (master)? what tag?
-    int rcv = 0;
-    int tag = 1;
-    MPI_Status Stat;
-
-    corpus = (double * ) malloc( n*d * sizeof(double) );
-    MPI_Recv(corpus, n*d, MPI_DOUBLE, rcv, tag, MPI_COMM_WORLD, &Stat);
-    
-    
-  }
-
+  // ============================== ONLY MASTER OUTPUTS
   
-  // run the distributed kNN code
-  knnresult knnres = distrAllkNN( corpus, n, d, k);
-
-
-  // ~~~~~~~~~~~~~~~~~~~~ gather back kNN results
-
-  if (id == 0) {                // ..... MASTER
-
-    knnresult knnresall;
-    knnresall.nidx  = (int *)   malloc( n*p*k*sizeof(int)    );
-    knnresall.ndist = (double *)malloc( n*p*k*sizeof(double) );
-    knnresall.m = n*p;
-    knnresall.k = k;
-
-    MPI_Status Stat;
-    
-    for (int ip = 0; ip < p-1; ip++){
-
-      // from which process to I receive? what tag?
-      int rcv = ip+1;
-      int tag = 1;
-      MPI_Status Stat;
-      
-      MPI_Recv( &knnresall.nidx[ip*n*k], n*k, MPI_INT, rcv, tag,
-                MPI_COMM_WORLD, &Stat);
-
-      MPI_Recv( &knnresall.ndist[ip*n*k], n*k, MPI_DOUBLE, rcv, tag,
-                MPI_COMM_WORLD, &Stat);
-
-    }
-
-    // move my result to final struct
-    for (int i = 0; i < n*k; i++){
-      knnresall.nidx[(p-1)*n*k+i] = knnres.nidx[i];
-      knnresall.ndist[(p-1)*n*k+i] = knnres.ndist[i];
-    }
-    
-    // ---------- validate result
-    int isValidC = validateResultColMajor( knnresall, corpusAll,
-                                           corpusAll,
-                                           n*p, n*p, d, k );
-
-    int isValidR = validateResultRowMajor( knnresall, corpusAll,
-                                           corpusAll,
-                                           n*p, n*p, d, k );
-
+  if (id == 0) {                // ..... MASTER gets result
     printf("Tester validation: %s NEIGHBORS\n",
            STR_CORRECT_WRONG[isValidC||isValidR]);
 
-
-  } else {                      // ..... other processes
-
-      
-      // which process to send? what tag?
-      int dst = 0;
-      int tag = 1;
-
-      // send to correct process
-      MPI_Send(knnres.nidx, n*k, MPI_INT, dst, tag, MPI_COMM_WORLD);
-      MPI_Send(knnres.ndist, n*k, MPI_DOUBLE, dst, tag, MPI_COMM_WORLD);
-    
   }
 
-  free( corpus );
-  free( corpusAll );
-  
   MPI_Finalize();               // clean-up
   
   return 0;
