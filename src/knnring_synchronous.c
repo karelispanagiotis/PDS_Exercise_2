@@ -2,7 +2,6 @@
 #include <mpi.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 
 
@@ -56,7 +55,6 @@ knnresult distrAllkNN(double * X, int n, int d, int k)
      */   
     int numtasks, rank, next, prev, tag=1;
     MPI_Status status;
-
     MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -70,7 +68,7 @@ knnresult distrAllkNN(double * X, int n, int d, int k)
     int idOffset = (rank-1)*n;
     if(rank == 0)
         idOffset = (numtasks-1)*n;
-    result = kNNpartion(X, X, n, n, d, k, idOffset);    //IDs start from rank*n
+    result = kNNpartition(X, X, n, n, d, k, idOffset);    //IDs start from rank*n
 
     //Y holds the data to receive, to work with and finally send 
     double *Y = malloc(d*n *sizeof(double)); 
@@ -79,7 +77,7 @@ knnresult distrAllkNN(double * X, int n, int d, int k)
 
     for(int iter=1; iter<numtasks; iter++)
     {
-        tempResult = kNNpartion(Y, X, n, n, d, k, idOffset);
+        tempResult = kNNpartition(Y, X, n, n, d, k, idOffset);
         updateResult(&result, &tempResult);
 
         free(tempResult.ndist);

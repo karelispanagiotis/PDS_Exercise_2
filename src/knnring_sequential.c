@@ -72,7 +72,7 @@ double *calculateD(double *X, double *Y, int n, int m, int d)
 
 ////////////////////////////////////////////////////////////////////////////
 
-knnresult kNNpartion(double *X, double *Y, int n, int m, int d, int k, int idOffset)
+knnresult kNNpartition(double *X, double *Y, int n, int m, int d, int k, int idOffset)
 {
     double *D = calculateD(X, Y, n, m, d);
 
@@ -104,5 +104,5 @@ knnresult kNNpartion(double *X, double *Y, int n, int m, int d, int k, int idOff
 
 knnresult kNN(double *X, double *Y, int n, int m, int d, int k)
 {
-    return kNNpartion(X, Y, n, m, d, k, 0); //IDs start from 0
+    return kNNpartition(X, Y, n, m, d, k, 0); //IDs start from 0
 }
