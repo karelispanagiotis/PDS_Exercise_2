@@ -62,7 +62,7 @@ double *calculateD(double *X, double *Y, int n, int m, int d)
 
     for (int i = 0; i < n; i++)
         for (int j = 0; j < m; j++)
-            D[i*m + j] = sqrt(D[i*m + j] + squareSumX[i] + squareSumY[j]);
+            D[i*m + j] = sqrt(fabs(D[i*m + j] + squareSumX[i] + squareSumY[j]));
 
     free(squareSumX);
     free(squareSumY);
