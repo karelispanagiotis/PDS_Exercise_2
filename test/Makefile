@@ -4,10 +4,10 @@ SHELL := /bin/bash
 # define the C/C++ compiler to use,default here is clang
 CC = gcc-7
 MPICC = mpicc
-MPIRUN = mpirun -np 2
+MPIRUN = mpirun --oversubscribe -np 5
 
 # define the C compiler flags
-CFLAGS = -lblas -lm -Wall
+CFLAGS = -lopenblas -lm -Wall 
 
 test_sequential:
 	cd ..; make lib;
@@ -21,5 +21,11 @@ test_mpi:
 	cp ../lib/*.a ../inc/knnring.h ./
 	$(MPICC) $(CFLAGS) tester_mpi.c knnring_synchronous.a -o $@
 	$(MPIRUN) $@
-	rm *.a test_mpi knnring.h
+	rm *.a $@ knnring.h
 
+test_mpi_async:
+	cd ..; make lib;
+	cp ../lib/*.a ../inc/knnring.h ./
+	$(MPICC) $(CFLAGS) tester_mpi.c knnring_asynchronous.a -o $@
+	$(MPIRUN) $@
+	rm *.a $@ knnring.h
