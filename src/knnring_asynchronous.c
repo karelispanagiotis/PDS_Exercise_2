@@ -7,7 +7,7 @@ void swapPtr(double** ptr1, double** ptr2)
 {
     double *tempPtr = *ptr1;
     *ptr1 = *ptr2;
-    *ptr1 = tempPtr;
+    *ptr2 = tempPtr;
 }
 
 void updateResult(knnresult* store, knnresult* new)
