@@ -1,6 +1,7 @@
 #include "knnring.h"
 #include <stdlib.h>
-#include <cblas-openblas.h>
+// #include <cblas-openblas>
+#include <cblas.h>
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
@@ -77,9 +78,9 @@ knnresult kNNpartition(double *X, double *Y, int n, int m, int d, int k, int idO
     double *D = calculateD(X, Y, n, m, d);
 
     knnresult result;
-    result.nidx = malloc(k*m * sizeof(int));
+    result.nidx = (int *) malloc(k * m * sizeof(int));
 
-    int *idArr = malloc(n*sizeof(int)); //is used as a temporary array
+    int *idArr = (int *) malloc(n * sizeof(int)); //is used as a temporary array
     for(int i=0; i<m; i++)
     {
         for(int j=0; j<n; j++)
@@ -95,7 +96,7 @@ knnresult kNNpartition(double *X, double *Y, int n, int m, int d, int k, int idO
     free(idArr);
     
     //only keep the first k rows of D and free the rest of memory
-    result.ndist = realloc(D, k*m*sizeof(double)); 
+    result.ndist = (double *) realloc(D, k * m * sizeof(double)); 
     result.k = k;
     result.m = m;
 

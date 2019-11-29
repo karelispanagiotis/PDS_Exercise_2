@@ -2,7 +2,8 @@
 SHELL := /bin/bash
 
 #define the C compiler to use
-CC = gcc-7
+# CC = gcc-7
+CC = gcc-6
 
 #define the MPI compiler to use
 MPIC = mpicc
