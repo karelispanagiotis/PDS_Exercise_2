@@ -1,5 +1,6 @@
 #include "knnring.h"
-#include <mpi.h>
+// #include <mpi.h>
+#include "mpi.h"
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
@@ -15,8 +16,8 @@ void updateResult(knnresult* store, knnresult* new)
     double tempDist[k*m];   //temp array, will be used in merging
     int tempId[k*m];        //temp array, will be used in merging
 
-    memcpy(tempDist, store->ndist, k*m * sizeof(double));   //copies the data of store
-    memcpy(tempId, store->nidx, k*m * sizeof(int));
+    memcpy(tempDist, store->ndist, k * m * sizeof(double));   //copies the data of store
+    memcpy(tempId, store->nidx, k * m * sizeof(int));
 
 
     int t, n;  //indexes for temp and new arrays, used in merging  
@@ -66,12 +67,11 @@ knnresult distrAllkNN(double * X, int n, int d, int k)
     if (rank == (numtasks - 1))  next = 0;
 
     int idOffset = (rank-1)*n;
-    if(rank == 0)
-        idOffset = (numtasks-1)*n;
+    if(rank == 0) idOffset = (numtasks-1)*n;
     result = kNNpartition(X, X, n, n, d, k, idOffset);    //IDs start from rank*n
 
     //Y holds the data to receive, to work with and finally send 
-    double *Y = malloc(d*n *sizeof(double)); 
+    double *Y = (double *) malloc(d * n * sizeof(double)); 
     MPI_Sendrecv(X, d*n, MPI_DOUBLE, next, tag, Y, d*n, MPI_DOUBLE, prev, tag, MPI_COMM_WORLD, &status);
     MPI_Sendrecv_replace(&idOffset, 1, MPI_INT, next, tag, prev, tag, MPI_COMM_WORLD, &status);
 
