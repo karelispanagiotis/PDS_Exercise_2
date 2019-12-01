@@ -19,9 +19,9 @@
 int main()
 {
 
-  int n=30000;                    // corpus
+  int n=897;                    // corpus
   int m=762;                    // query 
-  int d=50;                      // dimensions
+  int d=7;                      // dimensions
   int k=13;                     // # neighbors
 
   double  * corpus = (double * ) malloc( n*d * sizeof(double) );

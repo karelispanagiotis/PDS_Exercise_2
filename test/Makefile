@@ -2,10 +2,10 @@
 SHELL := /bin/bash
 
 # define the C/C++ compiler to use,default here is clang
-# CC = gcc-7
-CC = gcc-6
+CC = gcc-7
+#CC = gcc-6
 MPICC = mpicc
-MPIRUN = mpirun --oversubscribe -np 5
+MPIRUN = mpirun --oversubscribe -np 4
 
 # define the C compiler flags
 CFLAGS = -lopenblas -lm -Wall 

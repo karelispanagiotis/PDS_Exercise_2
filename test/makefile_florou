@@ -20,4 +20,3 @@ test_mpi:
 	cd knnring; cp lib/*.a inc/knnring.h ../; cd ..
 	$(MPICC) tester_mpi.c knnring_mpi.a -o $@ -lm -lopenblas
 	$(MPIRUN) ./test_mpi
-

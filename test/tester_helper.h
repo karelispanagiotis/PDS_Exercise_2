@@ -126,7 +126,7 @@ int validateResult( knnresult knnres,
         double distxy = distRowMajor( corpus, query, knnresnidx_rm(j,l), j, d, n, m );
 
         /* make sure reported distance is correct */
-        if ( fabs( knnresndist_rm(j,l) - distxy ) / (distxy + DBL_EPSILON) > 1e-6 ) return 0;
+        if ( fabs( knnresndist_rm(j,l) - distxy ) > 1e-6 ) return 0;
       
         /* distances should be non-decreasing */
         if ( knnresndist_rm(j,l) < maxDist ) return 0;

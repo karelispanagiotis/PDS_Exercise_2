@@ -166,8 +166,8 @@ int main(int argc, char *argv[])
   MPI_Init(&argc, &argv);       // initialize MPI
 
   int id;                       // PID
-  int n=10000;                   // # corpus elements per process
-  int d=2;                     // # dimensions
+  int n=1423;                   // # corpus elements per process
+  int d=37;                     // # dimensions
   int k=13;                     // # neighbors
 
   MPI_Comm_rank(MPI_COMM_WORLD, &id); // Task ID
