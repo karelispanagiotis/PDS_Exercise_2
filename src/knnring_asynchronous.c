@@ -51,6 +51,16 @@ void updateResult(knnresult* store, knnresult* new)
     }
 }
 
+double find_max(double *A,  int size){
+    double max = 0;    // Distances are positive so 0 is a good initializer for max
+    for(int i=0; i<size-1; ++i){
+        if(A[i] > max){
+            max = A[i];
+        }
+    }
+    return max;
+}
+
 knnresult distrAllkNN(double * X, int n, int d, int k)
 {
     knnresult result, tempResult;
@@ -66,6 +76,10 @@ knnresult distrAllkNN(double * X, int n, int d, int k)
 
     MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    // Max calculation
+    double max_proccess_temp = 0;  // max distance for this proccess with a specific query Y
+    double max_proccess_total = 0; // the maximum of the above max_process_temp for all querys Y
 
     // determine previous and next neighbors
     prev = rank-1;
@@ -84,6 +98,9 @@ knnresult distrAllkNN(double * X, int n, int d, int k)
     
     result = kNNpartition(X, X, n, n, d, k, idOffset);    //IDs start from rank*n
 
+    max_proccess_temp = find_max(result.ndist, result.k * result.m);
+    if(max_proccess_temp > max_proccess_total) max_proccess_total = max_proccess_temp;
+
     MPI_Waitall(2, requests, statuses);
 
     for(int iter=1; iter<numtasks; iter++)
@@ -95,11 +112,29 @@ knnresult distrAllkNN(double * X, int n, int d, int k)
         tempResult = kNNpartition(Y, X, n, n, d, k, idOffset);
         updateResult(&result, &tempResult);
 
+        max_proccess_temp = find_max(result.ndist, result.k * result.m);
+        if(max_proccess_temp > max_proccess_total) max_proccess_total = max_proccess_temp;
+
         free(tempResult.ndist);
         free(tempResult.nidx);
         
         MPI_Waitall(2, requests, statuses);
         swapPtr(&Y, &Z);
+    }
+
+    // Send the max result to the proccess with id=0 and
+    // compute the global maximum there
+    if(rank != 0){
+        MPI_Send(&max_proccess_total, 1, MPI_DOUBLE, 0, tag, MPI_COMM_WORLD);
+    }else if(rank == 0){
+        double max_p[numtasks];
+        double max_global;
+        for(int i=1; i<numtasks; ++i){
+            MPI_Recv(&max_p[i], 1, MPI_DOUBLE, i, tag, MPI_COMM_WORLD, &status);
+        }
+        max_p[0] = max_proccess_temp;
+        max_global = find_max(max_p, numtasks); // this is the global maximum for al lpoints
+        int min_global = 0; // Global minimum is 0 by default
     }
 
     free(Y);
