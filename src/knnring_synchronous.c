@@ -73,10 +73,11 @@ knnresult distrAllkNN(double * X, int n, int d, int k)
     //Y holds the data to receive, to work with and finally send 
     double *Y = (double *) malloc(d * n * sizeof(double)); 
     MPI_Sendrecv(X, d*n, MPI_DOUBLE, next, tag, Y, d*n, MPI_DOUBLE, prev, tag, MPI_COMM_WORLD, &status);
-    MPI_Sendrecv_replace(&idOffset, 1, MPI_INT, next, tag, prev, tag, MPI_COMM_WORLD, &status);
+    
 
     for(int iter=1; iter<numtasks; iter++)
     {
+        idOffset = ((idOffset - n) < 0) ? (idOffset - n)%(numtasks*n) + numtasks*n : (idOffset - n)%(numtasks*n); //(idOffset - 1) modulo numtasks*n
         tempResult = kNNpartition(Y, X, n, n, d, k, idOffset);
         updateResult(&result, &tempResult);
 
@@ -84,7 +85,6 @@ knnresult distrAllkNN(double * X, int n, int d, int k)
         free(tempResult.nidx);
         
         MPI_Sendrecv_replace(Y, d*n, MPI_DOUBLE, next, tag, prev, tag, MPI_COMM_WORLD, &status);
-        MPI_Sendrecv_replace(&idOffset, 1, MPI_INT, next, tag, prev, tag, MPI_COMM_WORLD, &status);
     }
 
     free(Y);

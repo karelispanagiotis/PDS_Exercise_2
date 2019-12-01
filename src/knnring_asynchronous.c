@@ -86,13 +86,12 @@ knnresult distrAllkNN(double * X, int n, int d, int k)
 
     MPI_Waitall(2, requests, statuses);
 
-    MPI_Sendrecv_replace(&idOffset, 1, MPI_INT, next, tag, prev, tag, MPI_COMM_WORLD, &status);
-
     for(int iter=1; iter<numtasks; iter++)
     {
         MPI_Isend(Y, d*n, MPI_DOUBLE, next, tag, MPI_COMM_WORLD, &requests[0]);
         MPI_Irecv(Z, d*n, MPI_DOUBLE, prev, tag, MPI_COMM_WORLD, &requests[1]);
 
+        idOffset = ((idOffset - n) < 0) ? (idOffset - n)%(numtasks*n) + numtasks*n : (idOffset - n)%(numtasks*n); //(idOffset - 1) modulo numtasks*n
         tempResult = kNNpartition(Y, X, n, n, d, k, idOffset);
         updateResult(&result, &tempResult);
 
@@ -100,7 +99,6 @@ knnresult distrAllkNN(double * X, int n, int d, int k)
         free(tempResult.nidx);
         
         MPI_Waitall(2, requests, statuses);
-        MPI_Sendrecv_replace(&idOffset, 1, MPI_INT, next, tag, prev, tag, MPI_COMM_WORLD, &status);
         swapPtr(&Y, &Z);
     }
 
