@@ -153,25 +153,6 @@ void testMPI( int    const n,
 }
 
 
-
-
-void testMPI2(int n, int d, int k) {
-  int p, id;                    // MPI # processess and PID
-  //MPI_Status Stat;              // MPI status
-  // int dst, rcv, tag;            // MPI destination, receive, tag
-
-  
-  MPI_Comm_rank(MPI_COMM_WORLD, &id); // Task ID
-  MPI_Comm_size(MPI_COMM_WORLD, &p);  // # tasks
-  
-  int chunk_size = n/p; // wont work if n/p not integer
-  double *X = ralloc(chunk_size * d);
-
-  knnresult result = distrAllkNN(X, chunk_size, d, k);
-
-  free( X );
-}
-
 int main(int argc, char *argv[])
 {
 
@@ -189,8 +170,7 @@ int main(int argc, char *argv[])
   // ============================== RUN EXPERIMENTS
 
   time_t t = clock();
-  // testMPI( n, d, k, COLMAJOR );
-  testMPI2(n, d, k);
+  testMPI( n, d, k, COLMAJOR );
   t = clock() - t;
   double execTime = (double)t/CLOCKS_PER_SEC;
 

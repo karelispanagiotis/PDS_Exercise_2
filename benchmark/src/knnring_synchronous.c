@@ -61,7 +61,6 @@ knnresult distrAllkNN(double * X, int n, int d, int k)
     MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    printf("%d %d\n", rank, 1);
 
     // determine previous and next neighbors
     prev = rank-1;
@@ -75,7 +74,6 @@ knnresult distrAllkNN(double * X, int n, int d, int k)
     
     time_t t1, t2 = clock();  //t1 holds communication time, t2 holds working time
     result = kNNpartition(X, X, n, n, d, k, idOffset);    //IDs start from rank*n
-    printf("%d %d\n", rank, 2);
 
     t2 = clock() - t2;
     //Y holds the data to receive, to work with and finally send 
@@ -83,10 +81,6 @@ knnresult distrAllkNN(double * X, int n, int d, int k)
     t1 = clock();
     MPI_Sendrecv(X, d*n, MPI_DOUBLE, next, tag, Y, d*n, MPI_DOUBLE, prev, tag, MPI_COMM_WORLD, &status);
     t1 = clock() - t1;
-
-    printf("%d %d\n", rank, 3);
-
-
     for(int iter=1; iter<numtasks; iter++)
     {
         t2 = t2 - clock();
