@@ -1,7 +1,6 @@
 #include "knnring.h"
 #include <stdlib.h>
-// #include <cblas-openblas>
-#include <cblas.h>
+#include <cblas-openblas.h>
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
@@ -46,7 +45,7 @@ void quickSort(double* distArr, int* idArr, int start, int end, int inc)
 
 double *calculateD(double *X, double *Y, int n, int m, int d)
 {
-    double *D = malloc(n*m * sizeof(double));          //is the Distances array [n-by-m]
+    double *D = malloc((size_t)n*m * sizeof(double));          //is the Distances array [n-by-m]
     cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans, //RowMajor, trans(X), noTrans(Y)
                 n, m, d,                                 //dimensions
                 -2.0, X, n, Y, m,                        //alpha, matrix(X), ldY, matrix(X), ldX

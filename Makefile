@@ -2,14 +2,14 @@
 SHELL := /bin/bash
 
 #define the C compiler to use
-# CC = gcc-7
-CC = gcc-6
+CC = gcc-7
 
 #define the MPI compiler to use
 MPIC = mpicc
 
 #define compile-time flags
-CFLAGS = -Wall -O3 -lopenblas -lm
+CFLAGS = -Wall -O3
+CLIBS = -lopenblas -lm
 
 #define directories containing header files
 INCLUDES = -I ./inc
@@ -21,10 +21,10 @@ lib: knnring_sequential.o knnring_synchronous.o knnring_asynchronous.o
 	rm ./lib/*.o
 
 knnring_sequential.o: src/knnring_sequential.c
-	$(CC) $(CFLAGS) $(INCLUDES) -c src/knnring_sequential.c -o lib/$@
+	$(CC) $(CFLAGS) $(INCLUDES) -c src/knnring_sequential.c $(CLIBS) -o lib/$@
 
 knnring_synchronous.o: src/knnring_synchronous.c 
-	$(MPIC) $(CFlAGS) $(INCLUDES) -c src/knnring_synchronous.c -o lib/$@
+	$(MPIC) $(CFlAGS) $(INCLUDES) -c src/knnring_synchronous.c $(CLIBS) -o lib/$@
 	
 knnring_asynchronous.o: src/knnring_asynchronous.c 
-	$(MPIC) $(CFLAGS) $(INCLUDES) -c src/knnring_asynchronous.c -o lib/$@
+	$(MPIC) $(CFLAGS) $(INCLUDES) -c src/knnring_asynchronous.c $(CLIBS) -o lib/$@
